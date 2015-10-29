@@ -12,6 +12,7 @@ import java.util.HashMap;
  * Created by zach on 10/19/15.
  */
 public class People {
+    static final int SHOW_COUNT = 20;
     public static void main(String[] args) {
         ArrayList<Person> people = new ArrayList();
 
@@ -30,25 +31,49 @@ public class People {
         Spark.get(
                 "/",
                 ((request, response) -> {
-                    String pageNum = request.queryParams("nextP");
-                    int nextP;
-                    if (pageNum == null){
-                        nextP = 0;
+                    String offset = request.queryParams("offset");
+                    int offsetNum;
+                    if (offset == null){
+                        offsetNum = 0;
                     }
                     else{
-                        nextP = Integer.valueOf(pageNum);
+                        offsetNum = Integer.valueOf(offset);
                     }
-                    if (!(nextP<people.size())) {
-                        Spark.halt(403);
-                        }
-                    else{
-                        ArrayList<Person> tempPeople = new ArrayList(people.subList(nextP, nextP + 20));
+
+                        ArrayList<Person> tempPeople = new ArrayList(people.subList(
+                                Math.max(0,Math.min(people.size(), offsetNum)),
+                                Math.max(0,Math.min(people.size(),offsetNum + SHOW_COUNT))));
                         HashMap m = new HashMap();
                         m.put("people", tempPeople);
-                        m.put("newNextP", nextP + 20);
-                        return new ModelAndView(m, "people.html");
+                        m.put("newOffset", offsetNum + SHOW_COUNT);
+                        m.put("newOffset", offsetNum + SHOW_COUNT);
+                    boolean showPrevious = offsetNum > 0;
+                    m.put("showPrevious", showPrevious);
+
+                    boolean isAtEnd = offsetNum + SHOW_COUNT <people.size();
+                    m.put("showNext", isAtEnd);
+
+
+                    return new ModelAndView(m, "people.html");
+
+                }),
+                new MustacheTemplateEngine()
+        );
+        Spark.get(
+                "/person",
+                ((request, response) -> {
+                    String id = request.queryParams("id");
+                    HashMap m = new HashMap();
+                    try{
+                        int idNum = Integer.valueOf(id);
+                        Person p = people.get(idNum-1);
+                        m.put("person",p);
+                    }catch (Exception e){
+
                     }
-                    return new ModelAndView(new HashMap<>(), "people.html");
+
+                    return new ModelAndView(m, "person.html");
+
                 }),
                 new MustacheTemplateEngine()
         );
