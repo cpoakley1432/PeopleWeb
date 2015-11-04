@@ -5,6 +5,7 @@ import spark.template.mustache.MustacheTemplateEngine;
 
 import java.io.File;
 import java.io.FileReader;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -12,8 +13,29 @@ import java.util.HashMap;
  * Created by zach on 10/19/15.
  */
 public class People {
+//id,first_name,last_name,email,country,ip_address
+
+    public static void createTables(Connection conn) throws SQLException {
+        Statement stmt = conn.createStatement();
+        stmt.execute("DROP TABLE IF EXISTS people");
+        stmt.execute("CREATE TABLE IF NOT EXISTS people (id IDENTITY, first_name VARCHAR, last_name VARCHAR, email VARCHAR, country VARCHAR, ip VARCHAR) ");
+    }
+
+    public static void insertPerson (Connection conn , String firstname, String lastname, String email, String country, String ip ) throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement("INSERT INTO people VALUES (NULL , ? , ? , ? , ? , ?)");
+        stmt.setString(1, firstname);
+        stmt.setString(2, lastname);
+        stmt.setString(3, email);
+        stmt.setString(4, country);
+        stmt.setString(5, ip);
+        stmt.execute();
+    }
+
+
     static final int SHOW_COUNT = 20;
-    public static void main(String[] args) {
+    public static void main(String[] args) throws SQLException {
+        Connection conn = DriverManager.getConnection("jdbc:h2:./main");
+
         ArrayList<Person> people = new ArrayList();
 
         String fileContent = readFile("people.csv");
